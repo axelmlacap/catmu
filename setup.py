@@ -15,7 +15,6 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     classifiers=[
         'Development Status :: 4 - Beta',
-        'Environment :: GPU :: NVIDIA CUDA',
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',

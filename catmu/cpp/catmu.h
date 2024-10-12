@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <time.h>
-#include <cuda.h>
-#include <cuda_runtime_api.h>
+// #include <cuda.h>
+// #include <cuda_runtime_api.h>
 #include <math.h>
 
 #ifdef DEBUG
@@ -23,14 +23,14 @@
          fprintf(stderr, __VA_ARGS__ ); \
     } while (0)
 
-// # MACRO CUDA_CHECK_ERROR()
-#define CUDA_CHECK_ERROR(X) \
-    do {cudaError_t err; \
-        err = cudaGetLastError(); \
-        if (err != cudaSuccess) { \
-            error_print("CODE %d -> %s\n", err, cudaGetErrorString(err)); \
-            X; \
-        }} while(0)
+// // # MACRO CUDA_CHECK_ERROR()
+// #define CUDA_CHECK_ERROR(X) \
+//     do {cudaError_t err; \
+//         err = cudaGetLastError(); \
+//         if (err != cudaSuccess) { \
+//             error_print("CODE %d -> %s\n", err, cudaGetErrorString(err)); \
+//             X; \
+//         }} while(0)
 
 // # ESTRUCTURA para la imagen convolucionada (resultado final)
 typedef struct sImage{
@@ -82,25 +82,25 @@ typedef struct sConfig{
     int n_streams;
 } sConfig;
 
-typedef struct cudaDevicePropCatmu {
-    char name[256];
-    int multiProcessorCount;
-    size_t totalGlobalMem;
-    size_t sharedMemPerBlock;
-    int major;
-    int minor;
-    int regsPerBlock;
-    int warpSize;
-    size_t memPitch;
-    int maxThreadsPerBlock;
-    int maxThreadsDim[3];
-    int maxGridSize[3];
-    int clockRate;
-    size_t totalConstMem;
-    size_t textureAlignment;
-    int deviceOverlap;
-    int kernelExecTimeoutEnabled;
-} cudaDevicePropCatmu;
+// typedef struct cudaDevicePropCatmu {
+//     char name[256];
+//     int multiProcessorCount;
+//     size_t totalGlobalMem;
+//     size_t sharedMemPerBlock;
+//     int major;
+//     int minor;
+//     int regsPerBlock;
+//     int warpSize;
+//     size_t memPitch;
+//     int maxThreadsPerBlock;
+//     int maxThreadsDim[3];
+//     int maxGridSize[3];
+//     int clockRate;
+//     size_t totalConstMem;
+//     size_t textureAlignment;
+//     int deviceOverlap;
+//     int kernelExecTimeoutEnabled;
+// } cudaDevicePropCatmu;
 
 
 // Tipo de función para el callback
@@ -113,10 +113,10 @@ typedef float psf_function(float x, float y, float * params);
 
 int set_device(int device);
 
-int set_texture_2d(cudaArray * cuArray, sLutPSF * psf,
-                   cudaTextureObject_t * texObj, bool normalized);
-int set_texture_3d(cudaArray * cuArray, sLutPSF * psf,
-                   cudaTextureObject_t * texObj, bool normalized);
+// int set_texture_2d(cudaArray * cuArray, sLutPSF * psf,
+//                    cudaTextureObject_t * texObj, bool normalized);
+// int set_texture_3d(cudaArray * cuArray, sLutPSF * psf,
+//                    cudaTextureObject_t * texObj, bool normalized);
 
 int set_images(sImage * h_image, sImage * d_image);
 int set_positions(sPositions * h_pos, sPositions * d_pos);
@@ -124,8 +124,8 @@ int upload_positions(sPositions * h_pos, sPositions * d_pos);
 int upload_params(sExpressionPSF * h_params, sExpressionPSF * d_params);
 int download_results(sImage * h_image, sImage * d_image);
 
-int free_device_memory(sImage * d_image, sPositions * d_pos,
-                       cudaTextureObject_t * texObj, cudaArray * cuArray);
+// int free_device_memory(sImage * d_image, sPositions * d_pos,
+//                        cudaTextureObject_t * texObj, cudaArray * cuArray);
 
 double get_T(sLutPSF * psf, int x, int y);
 double cpu_tex2d(sLutPSF * psf, float x, float y);

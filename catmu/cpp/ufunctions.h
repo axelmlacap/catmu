@@ -2,13 +2,13 @@
 
 // This macros allows compatibility with CUDA and C at same time
 
-#define PSF_2D(NAME, EXPRESSION) \
-    __device__ double cuda_##NAME(double x, double y, double *p){return EXPRESSION;} \
-    double c_##NAME(double x, double y, double *p){return EXPRESSION;}
+// #define PSF_2D(NAME, EXPRESSION) \
+//     __device__ double cuda_##NAME(double x, double y, double *p){return EXPRESSION;} \
+//     double c_##NAME(double x, double y, double *p){return EXPRESSION;}
 
-#define PSF_2D_ML(NAME, EXPRESSION) \
-    __device__ double cuda_##NAME(double x, double y, double *p){EXPRESSION;} \
-    double c_##NAME(double x, double y, double *p){EXPRESSION;}
+// #define PSF_2D_ML(NAME, EXPRESSION) \
+//     __device__ double cuda_##NAME(double x, double y, double *p){EXPRESSION;} \
+//     double c_##NAME(double x, double y, double *p){EXPRESSION;}
 
 // ---------------------------------------------------------------------------
 // PSFs FUNCTIONS
@@ -84,11 +84,11 @@
 typedef double (*u_func)(double, double, double * params);
 
 // List of available functions (ADD NEW FUNCTION NAMES INTO VECTOR)
-__device__ u_func cuda_u_function[] = {cuda_gaussian2D,
-                                       cuda_elliptical_gaussian2D,
-                                       cuda_gaussian2D_rc,
-                                       cuda_gaussian_with_halo2D,
-                                       cuda_finch_psf};
+// __device__ u_func cuda_u_function[] = {cuda_gaussian2D,
+//                                        cuda_elliptical_gaussian2D,
+//                                        cuda_gaussian2D_rc,
+//                                        cuda_gaussian_with_halo2D,
+//                                        cuda_finch_psf};
 
 u_func c_u_function[] = {c_gaussian2D,
                          c_elliptical_gaussian2D,
