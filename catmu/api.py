@@ -34,9 +34,9 @@ ValidPixelSizes = Union[PixelSize2D, PixelSize3D]
 def compile(lib_name: str = "libConvolve.so"):  # pragma: no cover
     print(f"Compilando {lib_name}...")
     import subprocess
-    make_command = f'make -C {pathlib.Path(__file__).parent / "cuda"} all'
+    make_command = f'make -C {pathlib.Path(__file__).parent / "cpp"} all'
     subprocess.run(make_command, shell=True)
-    lib_path = pathlib.Path(pathlib.Path(__file__).parent / f'cuda/{lib_name}')
+    lib_path = pathlib.Path(pathlib.Path(__file__).parent / f'cpp/{lib_name}')
     if lib_path.exists() is False:
         raise FileNotFoundError(f'La biblioteca {lib_path} no pudo ser compilada.')
     print("Compilación exitosa")
@@ -45,11 +45,12 @@ def compile(lib_name: str = "libConvolve.so"):  # pragma: no cover
 def load_library(debug=False) -> ctypes.CDLL:
     # Selecciona la biblioteca a utilizar (modo debug o no)
     if debug is True:
-        lib_name = 'libConvolveDebug.so'
+        # lib_name = 'libConvolveDebug.so'
+        lib_name = 'libConvolve.so'
     else:
         lib_name = 'libConvolve.so'
 
-    lib_path = pathlib.Path(pathlib.Path(__file__).parent / f'cuda/{lib_name}')
+    lib_path = pathlib.Path(pathlib.Path(__file__).parent / f'cpp/{lib_name}')
 
     # Si la biblioteca no existe intenta compilarla
     if lib_path.exists() is False:  # pragma: no cover
@@ -59,13 +60,13 @@ def load_library(debug=False) -> ctypes.CDLL:
     lib = ctypes.CDLL(lib_path)
 
     # Configura los tipos recibidos y el tipo devuelto
-    lib.getDevProp.argtypes = [ctypes.c_int, pDeviceProperties]
-    lib.getDevProp.restype = ctypes.c_int
+    # lib.getDevProp.argtypes = [ctypes.c_int, pDeviceProperties]
+    # lib.getDevProp.restype = ctypes.c_int
 
-    lib.lutConvolution.argtypes = [callbackType, pImage, pPositions, pLutPSF, pConfig]
-    lib.exprConvolution2D.argtypes = [callbackType, pImage, pPositions, pExprPSF, pConfig]
-    lib.lutConvolution.restype = ctypes.c_int
-    lib.exprConvolution2D.restype = ctypes.c_int
+    # lib.lutConvolution.argtypes = [callbackType, pImage, pPositions, pLutPSF, pConfig]
+    # lib.exprConvolution2D.argtypes = [callbackType, pImage, pPositions, pExprPSF, pConfig]
+    # lib.lutConvolution.restype = ctypes.c_int
+    # lib.exprConvolution2D.restype = ctypes.c_int
 
     lib.cpu_lut_convolve2D.argtypes = [pImage, pPositions, pLutPSF]
     lib.cpu_lut_convolve2D.restype = ctypes.c_int
@@ -81,22 +82,23 @@ def load_library(debug=False) -> ctypes.CDLL:
 
 
 lib = load_library(debug=False)
-lib_debug = load_library(debug=True)
+# lib_debug = load_library(debug=True)
 
 
 def get_available_devices() -> int:
-    count = ctypes.c_int(0)
-    r = lib.get_available_devices(ctypes.byref(count))
-    if r != 0:  # pragma: no cover
-        raise CatmuError(code=r)
-    return int(count.value)
+    # count = ctypes.c_int(0)
+    # r = lib.get_available_devices(ctypes.byref(count))
+    # if r != 0:  # pragma: no cover
+    #     raise CatmuError(code=r)
+    # return int(count.value)
+    return 0
 
 
 def get_device_properties(dev: int = 0) -> DeviceProperties:
     devProp = DeviceProperties()
-    r = lib.getDevProp(dev, devProp)
-    if r != 0:  # pragma: no cover
-        raise CatmuError(code=r)
+    # r = lib.getDevProp(dev, devProp)
+    # if r != 0:  # pragma: no cover
+    #     raise CatmuError(code=r)
     return devProp
 
 
@@ -142,7 +144,7 @@ class ConvolutionManager:
         if debug is False:   # pragma: no cover
             self._lib = lib
         else:
-            self._lib = lib_debug
+            self._lib = lib
 
         self._device = 0
 
@@ -450,29 +452,7 @@ class ConvolutionManagerGPU(ConvolutionManager):
                  n_streams: int = 100,
                  debug: bool = False):
 
-        super().__init__(debug=debug)
-
-        # Eventos señalizados por el hilo principal
-        self._main_ready = threading.Event()
-        self._main_stop = threading.Event()
-
-        # Eventos señalizados por el hilo daemon
-        self._daemon_running = threading.Event()
-        self._daemon_ready = threading.Event()
-        self._daemon_error = threading.Event()
-
-        # Codigo de retorno de cuda
-        self._error_code = 0
-
-        # Tiempo transcurrido entre checkpoints
-        self._last_elapsed_time = 0.0
-        # Cantidad de veces que se alcanzó el checkpoint
-        self._loop_counter = 0
-
-        # Configuraciones de dispositivo y división interna del trabajo
-        self._device = device
-        self._block_size = block_size
-        self._n_streams = n_streams
+        raise NotImplementedError()
 
     @property
     def loop_counter(self) -> int:
@@ -481,143 +461,19 @@ class ConvolutionManagerGPU(ConvolutionManager):
     @property
     def last_elapsed_time(self) -> float:
         return self._last_elapsed_time
+    
+    def _background_shutdown(self):  # pragma: no cover
+        return super()._background_shutdown()
 
-    def _background_shutdown(self):
-        # Detiene hilos secundarios de corridas anteriores (si existen)
-        if self._daemon_running.is_set():
-            logger.debug('Apagando la sesión anterior')
-            self._main_stop.set()
-            self._main_ready.set()
-            if self._daemon_ready.wait(timeout=self._timeout) is False:
-                raise TimeoutError  # pragma: no cover
-            logger.debug('Sesión anterior detenida')
-
-        if self._daemon_thread is not None:
-            if self._daemon_thread.join():
-                raise RuntimeError  # pragma: no cover
-
-        # Limpia las señalizaciones existentes
-        logger.debug('Flags desactivados')
-        self._main_ready.clear()
-        self._daemon_ready.clear()
-        self._main_stop.clear()
-
-    def _prepare(self):
-
-        self._s_config = DevConfig(device=self._device,
-                                   block_size=self._block_size,
-                                   n_streams=self._n_streams)
-
-        # Crea el hilo secundario y lo ejecuta
-        logger.debug('Creando sesión en GPU')
-        self._daemon_thread = threading.Thread(target=self._background_run, daemon=True)
-        self._daemon_thread.start()
-
-        # Se queda a la espera de que el hilo secundario alcance el checkpoint
-        logger.debug('Esperando a que el hilo secundario esté listo')
-        if self._daemon_ready.wait(timeout=self._timeout) is False:  # pragma: no cover
-            raise TimeoutError
-
-        # Cuando el hilo secundario está listo limpia su señalización
-        self._daemon_ready.clear()
-
-        # Si hubo algún error lo comunica
-        if self._daemon_error.is_set():  # pragma: no cover
-            logger.debug('Error de CUDA')
-            raise CatmuError(code=self._error_code)
-        else:
-            logger.debug('Sesión creada')
-
-    def _background_run(self):
+    def _background_run(self):  # pragma: no cover
         """ Método interno que gestiona las tareas del hilo secundario """
+        raise NotImplementedError()
 
-        try:
-            # Señaliza que el hilo secundario está corriendo
-            logger.debug('Hilo secundario corriendo')
-            self._daemon_running.set()
+    def _prepare(self):  # pragma: no cover
+        return super()._prepare()
 
-            # Función de checkpoint
-            def checkpoint(elapsed_time, loop_counter):
-                """ Punto de control del host de CUDA antes de comenzar la convolución
-
-                Esta función es llamada cada vez que el host de CUDA está listo para
-                llevar a cabo una nueva convolución.
-
-                La función corre dentro de este hilo secundario para evitar que congele la
-                ejecución principal.
-
-                Se utiliza la señal self._daemon_ready para indicar que el checkpoint fue
-                alcanzado y se espera la señal self._main_ready para continuar.
-
-                La función recibe del host de CUDA un indicador de tiempo transcurrido
-                desde la última llamada y un contador de ciclos. Almacena dichos
-                resultados en self._last_elapsed_time y self._loop_counter
-                respectivamente.
-
-                Devuelve al host de CUDA True para continuar o False para detener el
-                ciclo.
-
-                """
-                logger.debug('Checkpoint alcanzado')
-                self._last_elapsed_time = float(elapsed_time)
-                self._loop_counter = int(loop_counter)
-                logger.debug(f'Contador: {int(loop_counter)} '
-                             f'Tiempo: {float(elapsed_time)}')
-
-                self._daemon_ready.set()
-                if self._main_ready.wait(timeout=self._timeout) is False:
-                    raise TimeoutError  # pragma: no cover
-                self._main_ready.clear()
-
-                if self._main_stop.is_set():
-                    logger.debug('Señal de STOP recibida, checkpoint devuelve False')
-                    return False
-
-                n = len(self._positions)
-
-                self._s_image.set_data(self._results,
-                                       pixel_size=self._image_pixel_size)
-
-                self._s_positions.set_data(self._positions)
-
-                logger.debug('El checkpoint devuelve True y la GPU continua')
-                return True
-
-            if isinstance(self._s_psf, LutPSF):
-                logger.debug('Llamada a lutConvolution')
-                r = self._lib.lutConvolution(callbackType(checkpoint),
-                                             self._s_image,
-                                             self._s_positions,
-                                             self._s_psf,
-                                             self._s_config)
-            elif isinstance(self._s_psf, ExpressionPSF):
-                logger.debug('Llamada a expressionConvolution2D')
-                r = self._lib.exprConvolution2D(callbackType(checkpoint),
-                                                self._s_image,
-                                                self._s_positions,
-                                                self._s_psf,
-                                                self._s_config)
-            else:
-                raise TypeError  # pragma: no cover
-
-            if r != 0:  # pragma: no cover
-                self._error_code = r
-                self._daemon_error.set()
-            logger.debug(f'lutConvolution devolvió {r}')
-
-        except Exception:   # pragma: no cover
-            raise
-
-        finally:
-            self._daemon_ready.set()
-            self._daemon_running.clear()
-            logger.debug('Hilo secundario detenido')
-
-    def _start_convolution(self):
-        self._daemon_ready.clear()
-        self._main_stop.clear()
-        self._daemon_error.clear()
-        self._main_ready.set()
+    def _start_convolution(self):  # pragma: no cover
+        return super()._start_convolution()
 
     @property
     def active(self):

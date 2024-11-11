@@ -1,121 +1,121 @@
 #include "catmu.h"
 #include <omp.h>
 
-// Kernel de CUDA para la convolución TMU 2D
-__global__ void lutKernel2D(sImage image, sPositions pos, sLutPSF psf,
-                            cudaTextureObject_t texPSF,
-                            int offset_image, int offset_position){
+// // Kernel de CUDA para la convolución TMU 2D
+// __global__ void lutKernel2D(sImage image, sPositions pos, sLutPSF psf,
+//                             cudaTextureObject_t texPSF,
+//                             int offset_image, int offset_position){
 
-    // Identificación del kernel
-    size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
-    size_t idy = blockIdx.y * blockDim.y + threadIdx.y;
+//     // Identificación del kernel
+//     size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
+//     size_t idy = blockIdx.y * blockDim.y + threadIdx.y;
 
-    float px, py, pixel;
-    float factor_x, factor_y, center_x, center_y;
+//     float px, py, pixel;
+//     float factor_x, factor_y, center_x, center_y;
 
-    // Factor de conversión entre el pixel de la PSF y el de la imagen
-    factor_x = image.pixel_width / psf.pixel_width;
-    factor_y = image.pixel_height / psf.pixel_height;
+//     // Factor de conversión entre el pixel de la PSF y el de la imagen
+//     factor_x = image.pixel_width / psf.pixel_width;
+//     factor_y = image.pixel_height / psf.pixel_height;
 
-    // Centro de la PSF
-    center_x = psf.width / 2.0;
-    center_y = psf.height / 2.0;
+//     // Centro de la PSF
+//     center_x = psf.width / 2.0;
+//     center_y = psf.height / 2.0;
 
-    // Condición para calcular el pixel (que pertenezca a la imagen)
-    if (idx < image.width && idy < image.height) {
+//     // Condición para calcular el pixel (que pertenezca a la imagen)
+//     if (idx < image.width && idy < image.height) {
 
-        // Resultado acumulado (inicialmente en cero)
-        pixel = 0;
+//         // Resultado acumulado (inicialmente en cero)
+//         pixel = 0;
 
-        // Iteración sobre todas las fuentes virtuales
-        for (int i = 0; i < pos.n; i++){
-            // Conversión de coordenadas
-            px = (idx-pos.data[offset_position + i*2]) * factor_x + center_x;
-            py = (idy-pos.data[offset_position + i*2+1]) * factor_y + center_y;
-            // Evaluación realizada por la TMU para las coordenadas dadas
-            pixel += tex2D<float>(texPSF, px, py);
-        }
+//         // Iteración sobre todas las fuentes virtuales
+//         for (int i = 0; i < pos.n; i++){
+//             // Conversión de coordenadas
+//             px = (idx-pos.data[offset_position + i*2]) * factor_x + center_x;
+//             py = (idy-pos.data[offset_position + i*2+1]) * factor_y + center_y;
+//             // Evaluación realizada por la TMU para las coordenadas dadas
+//             pixel += tex2D<float>(texPSF, px, py);
+//         }
 
-        // Resultado aplicado a la imagen
-        image.data[offset_image + idy * image.width + idx] = pixel;
-    }
+//         // Resultado aplicado a la imagen
+//         image.data[offset_image + idy * image.width + idx] = pixel;
+//     }
 
-}
+// }
 
-// Kernel de CUDA para la convolución TMU 3D
-__global__ void lutKernel3D(sImage image, sPositions pos, sLutPSF psf,
-                            cudaTextureObject_t texPSF,
-                            int offset_image, int offset_position){
+// // Kernel de CUDA para la convolución TMU 3D
+// __global__ void lutKernel3D(sImage image, sPositions pos, sLutPSF psf,
+//                             cudaTextureObject_t texPSF,
+//                             int offset_image, int offset_position){
 
-    // Identificación del kernel
-    size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
-    size_t idy = blockIdx.y * blockDim.y + threadIdx.y;
-    size_t idz = blockIdx.z * blockDim.z + threadIdx.z;
+//     // Identificación del kernel
+//     size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
+//     size_t idy = blockIdx.y * blockDim.y + threadIdx.y;
+//     size_t idz = blockIdx.z * blockDim.z + threadIdx.z;
 
-    float px, py, pz, pixel;
-    float factor_x, factor_y, factor_z, center_x, center_y, center_z;
+//     float px, py, pz, pixel;
+//     float factor_x, factor_y, factor_z, center_x, center_y, center_z;
 
-    // Factor de conversión entre el pixel de la PSF y el de la imagen
-    factor_x = image.pixel_width / psf.pixel_width;
-    factor_y = image.pixel_height / psf.pixel_height;
-    factor_z = image.pixel_depth / psf.pixel_depth;
+//     // Factor de conversión entre el pixel de la PSF y el de la imagen
+//     factor_x = image.pixel_width / psf.pixel_width;
+//     factor_y = image.pixel_height / psf.pixel_height;
+//     factor_z = image.pixel_depth / psf.pixel_depth;
 
-    // Centro de la PSF
-    center_x = psf.width / 2.0;
-    center_y = psf.height / 2.0;
-    center_z = psf.depth / 2.0;
+//     // Centro de la PSF
+//     center_x = psf.width / 2.0;
+//     center_y = psf.height / 2.0;
+//     center_z = psf.depth / 2.0;
 
-    // Condición para calcular el pixel (que pertenezca a la imagen)
-    if (idx < image.width && idy < image.height && idz < image.depth) {
+//     // Condición para calcular el pixel (que pertenezca a la imagen)
+//     if (idx < image.width && idy < image.height && idz < image.depth) {
 
-        // Resultado acumulado (inicialmente en cero)
-        pixel = 0;
+//         // Resultado acumulado (inicialmente en cero)
+//         pixel = 0;
 
-        // Iteración sobre todas las fuentes virtuales
-        for (int i = 0; i < pos.n; i++){
-            // Conversión de coordenadas
-            px = (idx-pos.data[offset_position + i*3]) * factor_x + center_x;
-            py = (idy-pos.data[offset_position + i*3+1]) * factor_y + center_y;
-            pz = (idz-pos.data[offset_position + i*3+2]) * factor_z + center_z;
-            // Evaluación realizada por la TMU para las coordenadas dadas
-            pixel += tex3D<float>(texPSF, px, py, pz);
-        }
+//         // Iteración sobre todas las fuentes virtuales
+//         for (int i = 0; i < pos.n; i++){
+//             // Conversión de coordenadas
+//             px = (idx-pos.data[offset_position + i*3]) * factor_x + center_x;
+//             py = (idy-pos.data[offset_position + i*3+1]) * factor_y + center_y;
+//             pz = (idz-pos.data[offset_position + i*3+2]) * factor_z + center_z;
+//             // Evaluación realizada por la TMU para las coordenadas dadas
+//             pixel += tex3D<float>(texPSF, px, py, pz);
+//         }
 
-        // Resultado aplicado a la imagen
-        image.data[(offset_image +
-                    idz * image.height * image.width +
-                    idy * image.width + idx)] = pixel;
-    }
+//         // Resultado aplicado a la imagen
+//         image.data[(offset_image +
+//                     idz * image.height * image.width +
+//                     idy * image.width + idx)] = pixel;
+//     }
 
-}
+// }
 
-// Configuración del dispositivo (GPU) utilizado
-int set_device(int device){
-    int count, current_device;
-    // Consulta la cantidad de dispositivos disponibles
-    cudaGetDeviceCount(&count);
+// // Configuración del dispositivo (GPU) utilizado
+// int set_device(int device){
+//     int count, current_device;
+//     // Consulta la cantidad de dispositivos disponibles
+//     cudaGetDeviceCount(&count);
 
-    // Revisa que el dispositivo seleccionado exista
-    if (device >= count){
-        return 101;
-    }
-    info_print("Selecting device %d (%d available)\n", device, count);
+//     // Revisa que el dispositivo seleccionado exista
+//     if (device >= count){
+//         return 101;
+//     }
+//     info_print("Selecting device %d (%d available)\n", device, count);
 
-    // Configura el dispositivo
-    cudaSetDevice(device);
-    CUDA_CHECK_ERROR(return err);
+//     // Configura el dispositivo
+//     cudaSetDevice(device);
+//     CUDA_CHECK_ERROR(return err);
 
-    // Consulta el dispositivo actual
-    cudaGetDevice(&current_device);
-    info_print("Current device: %d\n", current_device);
+//     // Consulta el dispositivo actual
+//     cudaGetDevice(&current_device);
+//     info_print("Current device: %d\n", current_device);
 
-    // Reporta el error en caso de que la asignación falle
-    if (current_device != device){
-        return -2;
-    }
+//     // Reporta el error en caso de que la asignación falle
+//     if (current_device != device){
+//         return -2;
+//     }
 
-    return 0;
-}
+//     return 0;
+// }
 
 // extern "C" {
 // int get_available_devices(int * count){

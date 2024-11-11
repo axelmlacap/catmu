@@ -1,7 +1,7 @@
 import numpy as np
 from catmu import (get_available_devices,
                    get_device_properties,
-                   ConvolutionManagerGPU,
+                #    ConvolutionManagerGPU,
                    ConvolutionManagerCPU,
                    CatmuError)
 from catmu.analysis_tools import make_gaussian_psf_lut, make_n_random_positions
@@ -11,89 +11,89 @@ def test_get_available_devices():
     assert get_available_devices() >= 0
 
 
-# noinspection DuplicatedCode
-def test_gpu_lut_convolution_2d():
-    n = 100
-    image_size = (64, 64)
-    image_pixel_size = (1.0, 1.0)
-    psf_pixel_size = (1.0, 1.0)
-    psf_size = (10, 10)
-    n_sources = 6400
-    sigma = 2.0
+# # noinspection DuplicatedCode
+# def test_gpu_lut_convolution_2d():
+#     n = 100
+#     image_size = (64, 64)
+#     image_pixel_size = (1.0, 1.0)
+#     psf_pixel_size = (1.0, 1.0)
+#     psf_size = (10, 10)
+#     n_sources = 6400
+#     sigma = 2.0
 
-    pos = make_n_random_positions(n=n, n_sources=n_sources, convolution_size=image_size)
+#     pos = make_n_random_positions(n=n, n_sources=n_sources, convolution_size=image_size)
 
-    psf = make_gaussian_psf_lut(psf_size=psf_size, sigma=sigma)
+#     psf = make_gaussian_psf_lut(psf_size=psf_size, sigma=sigma)
 
-    convolution = ConvolutionManagerGPU(device=0,
-                                        block_size=8,
-                                        n_streams=10,
-                                        debug=True)
+#     convolution = ConvolutionManagerGPU(device=0,
+#                                         block_size=8,
+#                                         n_streams=10,
+#                                         debug=True)
 
-    convolution.prepare_lut_psf(psf=psf,
-                                image_size=image_size,
-                                image_pixel_size=image_pixel_size,
-                                psf_pixel_size=psf_pixel_size)
+#     convolution.prepare_lut_psf(psf=psf,
+#                                 image_size=image_size,
+#                                 image_pixel_size=image_pixel_size,
+#                                 psf_pixel_size=psf_pixel_size)
 
-    results = convolution.sync_convolve(positions=pos)
+#     results = convolution.sync_convolve(positions=pos)
 
-    assert convolution.loop_counter == 1
-    assert convolution.last_elapsed_time > 0
-    assert convolution.active is True
-    convolution
-
-
-# noinspection DuplicatedCode
-def test_gpu_lut_convolution_3d():
-    n = 2
-    image_size = (64, 64, 64)
-    image_pixel_size = (1.0, 1.0, 1.0)
-    psf_pixel_size = (1.0, 1.0, 1.0)
-    psf_size = (10, 10, 10)
-    n_sources = 100
-    sigma = 2.0
-
-    pos = make_n_random_positions(n=n,
-                                  n_dim=3,
-                                  n_sources=n_sources,
-                                  convolution_size=image_size)
-
-    psf = make_gaussian_psf_lut(psf_size=psf_size, sigma=sigma)
-
-    convolution = ConvolutionManagerGPU(device=0,
-                                        block_size=8,
-                                        n_streams=10,
-                                        debug=True)
-
-    convolution.prepare_lut_psf(psf=psf,
-                                image_size=image_size,
-                                image_pixel_size=image_pixel_size,
-                                psf_pixel_size=psf_pixel_size)
-
-    results = convolution.sync_convolve(positions=pos)
+#     assert convolution.loop_counter == 1
+#     assert convolution.last_elapsed_time > 0
+#     assert convolution.active is True
+#     convolution
 
 
-# noinspection DuplicatedCode
-def test_gpu_expression_convolution_2d():
-    n = 100
-    image_size = (64, 64)
-    image_pixel_size = (1.0, 1.0)
-    psf_pixel_size = (1.0 / 32.0, 1.0 / 32.0)
-    psf_size = (513, 513)
-    n_sources = 800
-    sigma = np.sqrt(2.0) * 32
+# # noinspection DuplicatedCode
+# def test_gpu_lut_convolution_3d():
+#     n = 2
+#     image_size = (64, 64, 64)
+#     image_pixel_size = (1.0, 1.0, 1.0)
+#     psf_pixel_size = (1.0, 1.0, 1.0)
+#     psf_size = (10, 10, 10)
+#     n_sources = 100
+#     sigma = 2.0
 
-    pos = make_n_random_positions(n=n, n_sources=n_sources, convolution_size=image_size)
+#     pos = make_n_random_positions(n=n,
+#                                   n_dim=3,
+#                                   n_sources=n_sources,
+#                                   convolution_size=image_size)
 
-    psf = make_gaussian_psf_lut(psf_size=psf_size, sigma=sigma)
+#     psf = make_gaussian_psf_lut(psf_size=psf_size, sigma=sigma)
 
-    convolution = ConvolutionManagerGPU(device=0,
-                                        block_size=8,
-                                        n_streams=10,
-                                        debug=True)
+#     convolution = ConvolutionManagerGPU(device=0,
+#                                         block_size=8,
+#                                         n_streams=10,
+#                                         debug=True)
 
-    convolution.prepare_expression_psf(id_function=0, params=[1.0, 2.0, 0.0])
-    results1 = convolution.sync_convolve(positions=pos)
+#     convolution.prepare_lut_psf(psf=psf,
+#                                 image_size=image_size,
+#                                 image_pixel_size=image_pixel_size,
+#                                 psf_pixel_size=psf_pixel_size)
+
+#     results = convolution.sync_convolve(positions=pos)
+
+
+# # noinspection DuplicatedCode
+# def test_gpu_expression_convolution_2d():
+#     n = 100
+#     image_size = (64, 64)
+#     image_pixel_size = (1.0, 1.0)
+#     psf_pixel_size = (1.0 / 32.0, 1.0 / 32.0)
+#     psf_size = (513, 513)
+#     n_sources = 800
+#     sigma = np.sqrt(2.0) * 32
+
+#     pos = make_n_random_positions(n=n, n_sources=n_sources, convolution_size=image_size)
+
+#     psf = make_gaussian_psf_lut(psf_size=psf_size, sigma=sigma)
+
+#     convolution = ConvolutionManagerGPU(device=0,
+#                                         block_size=8,
+#                                         n_streams=10,
+#                                         debug=True)
+
+#     convolution.prepare_expression_psf(id_function=0, params=[1.0, 2.0, 0.0])
+#     results1 = convolution.sync_convolve(positions=pos)
 
 
 # noinspection DuplicatedCode

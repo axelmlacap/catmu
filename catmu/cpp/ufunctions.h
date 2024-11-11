@@ -10,6 +10,12 @@
 //     __device__ double cuda_##NAME(double x, double y, double *p){EXPRESSION;} \
 //     double c_##NAME(double x, double y, double *p){EXPRESSION;}
 
+#define PSF_2D(NAME, EXPRESSION) \
+    double c_##NAME(double x, double y, double *p){return EXPRESSION;}
+
+#define PSF_2D_ML(NAME, EXPRESSION) \
+    double c_##NAME(double x, double y, double *p){EXPRESSION;}
+
 // ---------------------------------------------------------------------------
 // PSFs FUNCTIONS
 // ---------------------------------------------------------------------------

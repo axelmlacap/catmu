@@ -1,6 +1,10 @@
-CXXFLAGS   := -O2 -Wall
+CXX_FLAGS = -lgomp
+CXX_XFLAGS = -fPIC -fopenmp -shared
 
 all: libConvolve.so libConvolveDebug.so
 
-libConvolve.so: lutConvolution.cu exprConvolution.cu
-	g++ $(CXXFLAGS) -o $@ $^
+libConvolve.so: lutConvolution.cpp exprConvolution.cpp
+	g++ $(CXX_FLAGS) $^ $(CXX_XFLAGS) -o $@
+
+libConvolveDebug.so: lutConvolution.cpp exprConvolution.cpp
+	g++ $(CXX_FLAGS) $^ -DDEBUG $(CXX_XFLAGS) -o $@
